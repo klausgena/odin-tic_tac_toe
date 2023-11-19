@@ -32,7 +32,7 @@ function Gameboard() {
     const checkDraw = () => {
         for (let i = 0; i < columns; i++) {
             for (let j = 0; j < rows; j++) {
-                if (board[i][j].getState() === 0) {
+                if (board[i][j].getState() == 0) {
                     return false;
                 }
             }
@@ -138,7 +138,7 @@ function Cell() {
 function playGame() {
     const game = Gameboard();
     let turn = game.switchTurn();
-    while (!game.checkWin(turn)) {
+    while (!game.checkWin(turn) && !game.checkDraw()) {
         console.log(`Turn: ${turn}`);
         // here we can change to interactive bit
         // if turn == physical player, prompt or read from 
