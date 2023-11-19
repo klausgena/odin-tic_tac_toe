@@ -33,12 +33,10 @@ function Gameboard() {
         for (let i = 0; i < columns; i++) {
             for (let j = 0; j < rows; j++) {
                 if (board[i][j].getState() === 0) {
-                    console.log("Found a 0");
                     return false;
                 }
             }
         }
-        console.log("Draw");
         return true;
     }
 
@@ -142,6 +140,9 @@ function playGame() {
     let turn = game.switchTurn();
     while (!game.checkWin(turn)) {
         console.log(`Turn: ${turn}`);
+        // here we can change to interactive bit
+        // if turn == physical player, prompt or read from 
+        // web page, else autoplay.
         let [column, row] = game.autoPlay();
         if (game.checkCellFree(column, row)) {
             game.drawSign(column, row, turn);
@@ -150,6 +151,7 @@ function playGame() {
         }
     }
     if (game.checkDraw() && !game.checkWin(turn)) {
+        console.log("It's a draw");
         game.drawBoard();
         return;
     }
