@@ -159,24 +159,31 @@ function playGame() {
     game.drawBoard();
     return;
 }
-// Test
 
-const game = Gameboard();
-const board = game.getBoard();
-const cell = Cell();
-console.log(cell.getState());
-board[1][1].setState(1);
-board[1][1].setState(2);
-board[1][1].setState(0);
-game.drawSign(0, 0, 2);
-// board[0][0].setState(2);
-board[0][1].setState(2);
-board[0][2].setState(2);
-console.log(game.autoPlay());
-const test = game.autoPlay();
-console.log(test);
-console.log(`First random no: ${test[0]}`);
-console.log(board[1][1].getState());
-console.log(board[0][0].getState());
-console.log(game.checkWin(1));
-playGame();
+function playInteractive() {
+    const game = Gameboard();
+    const board = game.getBoard();
+    const boardDiv = document.getElementById("board");
+    const rows = 3; // why does board.length not work?
+    // draw the board
+    const drawBoard = () => {
+        // draw button in each cell three divs row 1 row 2 row 3 etc
+        for (let i = 0; i < rows; i++) {
+            let rowDiv = document.createElement('div');
+            rowDiv.setAttribute("id", `row-${i}`);
+            boardDiv.appendChild(rowDiv);
+            for (let j = 0; j < rows; j++) {
+                let playButton = document.createElement('button');
+                playButton.setAttribute('data-column', `${j}`);
+                playButton.setAttribute('data-row', `${i}`);
+                playButton.textContent = " ";
+                rowDiv.appendChild(playButton);
+            }
+        }
+    }
+    // add eventhandler on divBoard;
+    return { drawBoard };
+}
+// Test
+// playGame();
+playInteractive().drawBoard();
