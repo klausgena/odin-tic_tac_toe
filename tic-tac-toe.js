@@ -167,7 +167,8 @@ function playInteractive() {
     const rows = 3; // why does board.length not work?
     // draw the board
     const drawBoard = () => {
-        // draw button in each cell three divs row 1 row 2 row 3 etc
+        // FIRST clear old board
+        boardDiv.innerHTML = "";
         for (let i = 0; i < rows; i++) {
             let rowDiv = document.createElement('div');
             rowDiv.setAttribute("id", `row-${i}`);
@@ -176,13 +177,39 @@ function playInteractive() {
                 let playButton = document.createElement('button');
                 playButton.setAttribute('data-column', `${j}`);
                 playButton.setAttribute('data-row', `${i}`);
-                playButton.textContent = " ";
+                playButton.textContent = board[j][i].getState();
                 rowDiv.appendChild(playButton);
             }
         }
     }
     // add eventhandler on divBoard;
+    let column = -1;
+    let row = -1;
+
+    boardDiv.onclick = function (event) {
+        let target = event.target;
+        if (target.tagName != "BUTTON") return;
+        column = target.dataset.column;
+        row = target.dataset.row;
+        //  niet orthodox, allemaal naar buiten brengen
+        playTurn();
+    }
+    const playTurn = () => {
+        // if computer, one scenario
+        // if human, other
+        let turn = game.switchTurn();
+        if (game.checkCellFree(column, row)) {
+            game.drawSign(column, row, turn);
+            // this does not belong here
+            drawBoard();
+        }
+    }
+    const computerTurn = () => {
+        let [column, row] = game.autoPlay();
+
+    }
     return { drawBoard };
+    // TODO check human or computer isComputer, chosenToken if turn is not chosenToken , then autoplay
 }
 // Test
 // playGame();
