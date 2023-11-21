@@ -11,7 +11,6 @@ function Gameboard() {
     const getBoard = () => board;
 
     // switch turn
-
     let turn = 1;
 
     const switchTurn = () => {
@@ -163,11 +162,18 @@ function playGame() {
 function playInteractive() {
     const game = Gameboard();
     const board = game.getBoard();
+    const playerOne = 1; // TODO chooseSign function
     const boardDiv = document.getElementById("board");
     const rows = 3; // why does board.length not work?
+    // FIRST clear old board
+    // Get X, 0 or " "
+    function convertSign(state) {
+        if (state == 0) return " ";
+        if (state == 1) return "X";
+        else return "O";
+    }
     // draw the board
     const drawBoard = () => {
-        // FIRST clear old board
         boardDiv.innerHTML = "";
         for (let i = 0; i < rows; i++) {
             let rowDiv = document.createElement('div');
@@ -175,9 +181,10 @@ function playInteractive() {
             boardDiv.appendChild(rowDiv);
             for (let j = 0; j < rows; j++) {
                 let playButton = document.createElement('button');
+                let sign = convertSign(board[j][i].getState());
                 playButton.setAttribute('data-column', `${j}`);
                 playButton.setAttribute('data-row', `${i}`);
-                playButton.textContent = board[j][i].getState();
+                playButton.textContent = sign;
                 rowDiv.appendChild(playButton);
             }
         }
@@ -192,25 +199,27 @@ function playInteractive() {
         column = target.dataset.column;
         row = target.dataset.row;
         //  niet orthodox, allemaal naar buiten brengen
-        playTurn();
+        playTurn(column, row);
     }
-    const playTurn = () => {
-        // if computer, one scenario
-        // if human, other
-        let turn = game.switchTurn();
+    turn = playerOne; // TODO: change this if user chooses O
+
+    const playTurn = (column, row) => {
+        let sign = convertSign(turn);
         if (game.checkCellFree(column, row)) {
             game.drawSign(column, row, turn);
-            // this does not belong here
             drawBoard();
+            if (game.checkWin(turn)) {
+                alert(`${sign} won!`);
+            }
+            if (game.checkDraw()) {
+                alert("It's a draw!");
+            }
+            turn = game.switchTurn();
         }
     }
-    const computerTurn = () => {
-        let [column, row] = game.autoPlay();
-
-    }
     return { drawBoard };
-    // TODO check human or computer isComputer, chosenToken if turn is not chosenToken , then autoplay
 }
+// TODO check human or computer isComputer, chosenToken if turn is not chosenToken , then autoplay
 // Test
 // playGame();
 playInteractive().drawBoard();
