@@ -1,225 +1,205 @@
-function Gameboard() {
-    const columns = 3;
-    const rows = 3;
+function Cell() {
+    let state = 0;
+    let empty = true;
+    const setState = (newState) => {
+        if (newState != 1 && newState != 2) return;
+        state = newState;
+        empty = false;
+    };
+    const getState = () => state;
+    const isEmpty = () => empty;
+    return { setState, getState, isEmpty };
+}
+function Player() {
+    let autoFill = false;
+    let sign = 0;
+    let winner = false;
+    const setSign = (newSign) => {
+        if (newSign != 1 && newSign != 2) return;
+        sign = newSign;
+    };
+    const getSign = () => sign;
+    const setWinner = () => winner = true;
+    const getWinner = () => winner;
+    const setAutoFill = () => autoFill = true;
+    const getAutoFill = () => autoFill;
+    return { setSign, getSign, setWinner, getWinner, setAutoFill, getAutoFill };
+}
+const Game = (function () {
+    let moves = 0;
+    let draw = false;
+    let winner = false;
+    let turn = 1;
+    const isGameOver = () => {
+        if (moves >= 9) return true;
+        else return false;
+    };
+    const setDraw = () => draw = true;
+    const getDraw = () => draw;
+    const setWinner = () => winner = true;
+    const getWinner = () => winner;
+    const addMove = () => moves++;
+    const resetMoves = () => moves = 0;
+    const getMoves = () => moves;
+    const switchTurn = () => turn = turn == 1 ? 2 : 1;
+    const getTurn = () => turn;
+    return { setDraw, getDraw, setWinner, getWinner, addMove, isGameOver, resetMoves, getMoves, switchTurn, getTurn };
+})();
+
+const Board = (function () {
     const board = [];
-    for (let i = 0; i < columns; i++) {
+    const rows = 3;
+    const columns = 3;
+    // initialize the game board
+    for (let i = 0; i < rows; i++) {
         board[i] = [];
-        for (let j = 0; j < rows; j++) {
+        for (let j = 0; j < columns; j++) {
             board[i].push(Cell());
         }
     }
-    const getBoard = () => board;
-
-    // switch turn
-    let turn = 1;
-
-    const switchTurn = () => {
-        turn = turn == 1 ? turn = 2 : turn = 1;
-        return turn;
-    }
-
-    // check if the cell is 0
-    const checkCellFree = (column, row) => {
-        if (board[column][row].getState() != 0) {
-            console.log("Oups. Cell already taken.");
-            return false;
+    const currentState = () => board;
+    const changeState = (column, row, state) => {
+        board[column][row].setState(state);
+    };
+    const isEmpty = (column, row) => {
+        if (board[column][row].isEmpty()) {
+            return true;
         }
-        return true;
-    }
-
-    // check if it's a draw
-    const checkDraw = () => {
-        for (let i = 0; i < columns; i++) {
-            for (let j = 0; j < rows; j++) {
-                if (board[i][j].getState() == 0) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    // register a turn  
-    const drawSign = (column, row, turn) => {
-        board[column][row].setState(turn);
-    }
-
-    // let the computer play
-    const autoPlay = () => {
-        let randomColumn = (Math.floor(Math.random() * columns));
-        let randomRow = (Math.floor(Math.random() * rows));
-        console.log(`The computer plays column ${randomColumn} and row ${randomRow}`);
-        return [randomColumn, randomRow];
-    }
-
-    // check if somebody has won
-    const checkWin = (sign) => {
-        let winCount = 0;
-        // if all identical rows == the sign -> true
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns; j++) {
-                if (board[i][j].getState() != sign) {
-                    continue;
-                }
-                winCount++;
-                if (winCount == rows) {
-                    console.log("identical rows");
-                    return true;
-                }
-            }
-            winCount = 0;
-        }
-        // if all identical columns == the sign -> true
-        winCount = 0;
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns; j++) {
-                if (board[j][i].getState() != sign) {
-                    continue;
-                }
-                winCount++;
-                if (winCount == columns) {
-                    console.log("identical columns");
-                    return true;
-                }
-            }
-            winCount = 0;
-        }
-        // if 00 11 22 == sign -> true
-        let j = 0;
-        for (let i = 0; i < rows; i++) {
-            if (board[i][i].getState() != sign) continue;
-            j++;
-            if (j == rows) {
-                console.log("identical diagonal l->r");
-                return true;
-            }
-        }
-        // if 20 11 02 == sign -> true
-        j = rows;
-        for (let i = 0; i < columns; i++) {
-            if (board[i][j - 1].getState() != sign) {
-                continue;
-            }
-            j--;
-            if (j == 0) {
-                console.log("identical diag r->l");
-                return true;
-            }
-        }
-        // else false
         return false;
-    }
+    };
+    return { currentState, changeState, isEmpty };
+})();
 
-    // draw board
+function gameHelpers() {
+    const checkDraw = () => {
+        if (Game.isGameOver() && (!Game.getWinner())) {
+            Game.setDraw();
+        }
+        return Game.getDraw();
+    };
+    const checkWinner = (player) => {
+        if (Game.getMoves() < 3) return;
+        const sign = player.getSign();
+        const board = Board.currentState();
+        const rowsAndCols = board.length;
+        for (let i = 0; i < rowsAndCols; i++) {
+            let countRows, countColumns, countDiagOne, countDiagTwo;
+            countRows = countColumns = countDiagOne = countDiagTwo = 0;
+            let k = rowsAndCols - 1;
+            for (let j = 0; j < rowsAndCols; j++) {
+                // check each column for a win
+                if (board[i][j].getState() == sign) countRows++;
+                // check each row for a win
+                if (board[j][i].getState() == sign) countColumns++;
+                // check first diagonal for a win
+                if (board[j][j].getState() == sign) countDiagOne++;
+                // check second diagonal for a win
+                if (board[k][j].getState() == sign) countDiagTwo++;
+                k--;
+            }
+            if (countColumns == rowsAndCols ||
+                countRows == rowsAndCols ||
+                countDiagOne == rowsAndCols ||
+                countDiagTwo == rowsAndCols) {
+                Game.setWinner();
+                player.setWinner();
+            }
+        }
+        return player.getWinner();
+    };
+    function autoFillColRow() {
+        let range = Board.currentState().length;
+        const randomCol = Math.floor(Math.random() * range);
+        const randomRow = Math.floor(Math.random() * range);
+        console.log(`Autofill: ${randomCol} and ${randomRow}`);
+        return [randomCol, randomRow];
+    };
+    function pickField(player) {
+        // pick field  (manual or auto) (recursive function)
+        let col, row;
+        if (player.getAutoFill()) {
+            [col, row] = autoFillColRow();
+        }
+        // TODO ELSE PROMPT PLAYER FOR COL AND ROW
+        // const [col, row] = displayController.getField(); hieronder moet dus weg
+        else {
+            [col, row] = autoFillColRow();
+        }
+        // if is field empty?
+        if (Board.isEmpty(col, row)) {
+            console.log(`Empty: col ${col} and row ${row}`);
+            return [col, row];
+        }
+        else {
+            console.log(`Not empty: col ${col} and row ${row}`);
+            pickField(player);
+        }
+    };
+    const playGame = (playerOne, playerTwo) => {
+        // who plays?
+        const currentPlayer = playerOne.getSign() == Game.getTurn() ? playerOne : playerTwo;
+        const [col, row] = pickField(currentPlayer);
+        // draw the sign
+        Board.changeState(col, row, currentPlayer.getSign());
+        Game.addMove();
+        console.log(Game.getMoves());
+        // check if winner or draw
+        if (checkWinner(currentPlayer)) {
+            // TODO displayController
+            console.log(`${currentPlayer.getSign()} wins.`);
+            return;
+        }
+        else if (checkDraw()) {
+            console.log("It's a draw. Game over!");
+            return;
+        }
+        else {
+            Game.switchTurn();
+            playGame(playerOne, playerTwo);
+        }
+    }
+    return { playGame };
+};
+
+function screenController() {
     const drawBoard = () => {
-        let rowString = "";
-        for (let i = 0; i < columns; i++) {
-            for (let j = 0; j < rows; j++) {
-                rowString = `${rowString} | ${board[i][j].getState()}`;
+        console.log('\033[2J');
+        console.log("Board");
+        const board = Board.currentState();
+        const size = board.length;
+        for (let i = 0; i < size; i++) {
+            console.log("\n");
+            let line = "";
+            for (let j = 0; j < size; j++) {
+                const state = board[i][j].getState();
+                let sign = "-";
+                if (state != 0) {
+                    sign = state == 1 ? "X" : "O";
+                }
+                line = line + sign;
             }
-            console.log(rowString);
-            rowString = "";
+            console.log(line);
         }
-    }
+    };
+    const announceWinner = (player) => console.log(`${player.getsign()} has won.`);
+    const announceDraw = () => console.log('Draw. Game over!');
+    return { drawBoard, announceDraw, announceWinner };
+};
 
-    return { getBoard, drawSign, checkWin, switchTurn, autoPlay, checkCellFree, drawBoard, checkDraw };
+const gameFlow = (function () {
+    // Initialize modules
+    const screen = screenController();
+    const helpers = gameHelpers();
+    // Create players
+    const human = Player();
+    const computer = Player();
+    // computer plays random cell
+    computer.setAutoFill();
+    // Set player choices
+    // TODO make this interactive
+    human.setSign(1);
+    computer.setSign(2);
+    // // Play
+    helpers.playGame(human, computer);
+})();
 
-}
-
-function Cell() {
-    let state = 0;
-    const setState = (newState) => { state == 0 ? state = newState : state };
-    const getState = () => { return state };
-
-    return { setState, getState };
-}
-
-function playGame() {
-    const game = Gameboard();
-    let turn = game.switchTurn();
-    while (!game.checkWin(turn) && !game.checkDraw()) {
-        console.log(`Turn: ${turn}`);
-        // here we can change to interactive bit
-        // if turn == physical player, prompt or read from 
-        // web page, else autoplay.
-        let [column, row] = game.autoPlay();
-        if (game.checkCellFree(column, row)) {
-            game.drawSign(column, row, turn);
-            console.log("One round");
-            turn = game.switchTurn();
-        }
-    }
-    if (game.checkDraw() && !game.checkWin(turn)) {
-        console.log("It's a draw");
-        game.drawBoard();
-        return;
-    }
-    console.log(`Game over! Player ${turn} wins!`);
-    game.drawBoard();
-    return;
-}
-
-function playInteractive() {
-    const game = Gameboard();
-    const board = game.getBoard();
-    const playerOne = 1; // TODO chooseSign function
-    const boardDiv = document.getElementById("board");
-    const rows = 3; // why does board.length not work?
-    // FIRST clear old board
-    // Get X, 0 or " "
-    function convertSign(state) {
-        if (state == 0) return " ";
-        if (state == 1) return "X";
-        else return "O";
-    }
-    // draw the board
-    const drawBoard = () => {
-        boardDiv.innerHTML = "";
-        for (let i = 0; i < rows; i++) {
-            let rowDiv = document.createElement('div');
-            rowDiv.setAttribute("id", `row-${i}`);
-            boardDiv.appendChild(rowDiv);
-            for (let j = 0; j < rows; j++) {
-                let playButton = document.createElement('button');
-                let sign = convertSign(board[j][i].getState());
-                playButton.setAttribute('data-column', `${j}`);
-                playButton.setAttribute('data-row', `${i}`);
-                playButton.textContent = sign;
-                rowDiv.appendChild(playButton);
-            }
-        }
-    }
-    // add eventhandler on divBoard;
-    let column = -1;
-    let row = -1;
-
-    boardDiv.onclick = function (event) {
-        let target = event.target;
-        if (target.tagName != "BUTTON") return;
-        column = target.dataset.column;
-        row = target.dataset.row;
-        //  niet orthodox, allemaal naar buiten brengen
-        playTurn(column, row);
-    }
-    turn = playerOne; // TODO: change this if user chooses O
-
-    const playTurn = (column, row) => {
-        let sign = convertSign(turn);
-        if (game.checkCellFree(column, row)) {
-            game.drawSign(column, row, turn);
-            drawBoard();
-            if (game.checkWin(turn)) {
-                alert(`${sign} won!`);
-            }
-            if (game.checkDraw()) {
-                alert("It's a draw!");
-            }
-            turn = game.switchTurn();
-        }
-    }
-    return { drawBoard };
-}
-// TODO check human or computer isComputer, chosenToken if turn is not chosenToken , then autoplay
-// Test
-// playGame();
-playInteractive().drawBoard();
