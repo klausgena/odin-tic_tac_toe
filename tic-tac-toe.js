@@ -114,7 +114,7 @@ function gameHelpers() {
         console.log(`Autofill: ${randomCol} and ${randomRow}`);
         return [randomCol, randomRow];
     };
-    function pickField(player) {
+    const pickField = (player) => {
         // pick field  (manual or auto) (recursive function)
         let col, row;
         if (player.getAutoFill()) {
@@ -134,6 +134,7 @@ function gameHelpers() {
             console.log(`Not empty: col ${col} and row ${row}`);
             pickField(player);
         }
+        return [col, row];
     };
     const playGame = (playerOne, playerTwo) => {
         // who plays?
@@ -158,7 +159,7 @@ function gameHelpers() {
             playGame(playerOne, playerTwo);
         }
     }
-    return { playGame };
+    return { playGame, pickField };
 };
 
 function screenController() {
