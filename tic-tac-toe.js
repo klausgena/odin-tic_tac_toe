@@ -14,16 +14,19 @@ function Player() {
     let autoFill = false;
     let sign = 0;
     let winner = false;
+    let [col, row] = [3, 3];
     const setSign = (newSign) => {
         if (newSign != 1 && newSign != 2) return;
         sign = newSign;
     };
+    const setColRow = (newCol, newRow) => [col, row] = [newCol, newRow];
+    const getColRow = () => [col, row];
     const getSign = () => sign;
     const setWinner = () => winner = true;
     const getWinner = () => winner;
     const setAutoFill = () => autoFill = true;
     const getAutoFill = () => autoFill;
-    return { setSign, getSign, setWinner, getWinner, setAutoFill, getAutoFill };
+    return { setSign, getSign, setWinner, getWinner, setAutoFill, getAutoFill, setColRow, getColRow };
 }
 const Game = (function () {
     let moves = 0;
@@ -123,7 +126,7 @@ function gameHelpers() {
         // TODO ELSE PROMPT PLAYER FOR COL AND ROW
         // const [col, row] = displayController.getField(); hieronder moet dus weg
         else {
-            [col, row] = autoFillColRow();
+            [col, row] = player.getColRow();
         }
         // if is field empty?
         if (Board.isEmpty(col, row)) {
@@ -144,6 +147,7 @@ function gameHelpers() {
         Board.changeState(col, row, currentPlayer.getSign());
         Game.addMove();
         console.log(Game.getMoves());
+        // screen.drawBoard();
         // check if winner or draw
         if (checkWinner(currentPlayer)) {
             // TODO displayController
@@ -162,45 +166,77 @@ function gameHelpers() {
     return { playGame, pickField };
 };
 
-function screenController() {
-    const drawBoard = () => {
-        console.log('\033[2J');
-        console.log("Board");
-        const board = Board.currentState();
-        const size = board.length;
-        for (let i = 0; i < size; i++) {
-            console.log("\n");
-            let line = "";
-            for (let j = 0; j < size; j++) {
-                const state = board[i][j].getState();
-                let sign = "-";
-                if (state != 0) {
-                    sign = state == 1 ? "X" : "O";
-                }
-                line = line + sign;
-            }
-            console.log(line);
+const displayController = (humanPlayer, computerPlayer) => {
+    const helpers = gameHelpers();
+    const drawChoice = () => {
+        const choiceDiv = document.getElementById("player-choice");
+        const xButton = document.createElement("button");
+        xButton.setAttribute("data-choice", 1);
+        xButton.textContent = "X";
+        const oButton = document.createElement("button");
+        oButton.setAttribute("data-choice", 2);
+        oButton.textContent = "O";
+        choiceDiv.appendChild(xButton);
+        choiceDiv.appendChild(oButton);
+        // event handler
+        choiceDiv.onclick = function (event) {
+            let target = event.target;
+            if (target.tagName != "BUTTON") return;
+            humanPlayer.setSign(target.dataset.choice);
+            let computerSign = humanPlayer.getSign() == 1 ? 2 : 1;
+            computerPlayer.setSign(computerSign);
+            // Make this a function announcement
+            alert(humanPlayer.getSign());
+            choiceDiv.innerHTML = "";
+            drawBoard();
         }
-    };
-    const announceWinner = (player) => console.log(`${player.getsign()} has won.`);
-    const announceDraw = () => console.log('Draw. Game over!');
-    return { drawBoard, announceDraw, announceWinner };
-};
+    }
+    const drawBoard = () => {
+        const boardDiv = document.getElementById("board");
+        boardDiv.innerHTML = "";
+        const size = Board.currentState().length;
+        for (let i = 0; i < size; i++) {
+            const row = document.createElement("div");
+            row.setAttribute("id", `row-${i}`);
+            boardDiv.appendChild(row);
+            for (let j = 0; j < size; j++) {
+                const cell = document.createElement("button");
+                cell.setAttribute("data-column", i);
+                cell.setAttribute("data-row", j);
+                cell.textContent = Board.currentState()[i][j].getState();
+                row.appendChild(cell);
+            }
+        }
+        boardDiv.onclick = function (event) {
+            let target = event.target;
+            if (target.tagName != "BUTTON") return;
+            // TODO maybe just assign colum an drow?
+            humanPlayer.setColRow(target.dataset.column, target.dataset.row);
+            helpers.playGame(humanPlayer, computerPlayer);
+        }
+    }
+    const drawWinner = () => {
+        winDiv = document.getElementById("game-over");
+        const message = document.createElement("h2");
+        // todo make this a function?
+        message.textContent = "Game over. Win or draw, whatever.";
+        winDiv.appendChild(message);
+    }
+    return { drawChoice, drawBoard, drawWinner }
+}
 
 const gameFlow = (function () {
     // Initialize modules
-    const screen = screenController();
     const helpers = gameHelpers();
     // Create players
     const human = Player();
     const computer = Player();
+    const display = displayController(human, computer);
     // computer plays random cell
     computer.setAutoFill();
-    // Set player choices
-    // TODO make this interactive
-    human.setSign(1);
-    computer.setSign(2);
-    // // Play
-    helpers.playGame(human, computer);
-})();
+    // Set human player choices
+    display.drawChoice(human);
 
+    // // Play
+    // helpers.playGame(human, computer);
+})();
