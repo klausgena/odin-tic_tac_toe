@@ -133,15 +133,14 @@ function gameHelpers() {
         }
         else {
             console.log(`Not empty: col ${col} and row ${row}`);
-            pickField(player);
+            return pickField(player);
         }
-        return [col, row];
     };
     const playRound = (playerOne, playerTwo, count) => {
         if (count > 1) return;
         const currentPlayer = playerOne.getSign() == Game.getTurn() ? playerOne : playerTwo;
         const [col, row] = pickField(currentPlayer);
-        console.log("Got here fine...");
+        console.log(`Got here fine. with col ${col} and row ${row}..`);
         Board.changeState(col, row, currentPlayer.getSign());
         displayController(playerOne, playerTwo).drawBoard();
         console.log("Did the screen update?");
