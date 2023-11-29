@@ -54,18 +54,18 @@ const Board = (function () {
     const rows = 3;
     const columns = 3;
     // initialize the game board
-    for (let i = 0; i < rows; i++) {
-        board[i] = [];
-        for (let j = 0; j < columns; j++) {
-            board[i].push(Cell());
+    for (let row = 0; row < rows; row++) {
+        board[row] = [];
+        for (let column = 0; column < columns; column++) {
+            board[row].push(Cell());
         }
     }
     const currentState = () => board;
     const changeState = (column, row, state) => {
-        board[column][row].setState(state);
+        board[row][column].setState(state);
     };
     const isEmpty = (column, row) => {
-        if (board[column][row].isEmpty()) {
+        if (board[row][column].isEmpty()) {
             return true;
         }
         return false;
@@ -123,8 +123,6 @@ function gameHelpers() {
         if (player.getAutoFill()) {
             [col, row] = autoFillColRow();
         }
-        // TODO ELSE PROMPT PLAYER FOR COL AND ROW
-        // const [col, row] = displayController.getField(); hieronder moet dus weg
         else {
             [col, row] = player.getColRow();
         }
@@ -139,31 +137,28 @@ function gameHelpers() {
         }
         return [col, row];
     };
-    const playGame = (playerOne, playerTwo) => {
-        // who plays?
+    const playRound = (playerOne, playerTwo, count) => {
+        if (count > 1) return;
         const currentPlayer = playerOne.getSign() == Game.getTurn() ? playerOne : playerTwo;
         const [col, row] = pickField(currentPlayer);
-        // draw the sign
+        console.log("Got here fine...");
         Board.changeState(col, row, currentPlayer.getSign());
+        displayController(playerOne, playerTwo).drawBoard();
+        console.log("Did the screen update?");
         Game.addMove();
-        console.log(Game.getMoves());
-        // screen.drawBoard();
-        // check if winner or draw
+        Game.switchTurn();
         if (checkWinner(currentPlayer)) {
-            // TODO displayController
-            console.log(`${currentPlayer.getSign()} wins.`);
+            displayController(playerOne, playerTwo).drawWinner();
             return;
         }
         else if (checkDraw()) {
-            console.log("It's a draw. Game over!");
+            displayController(playerOne, playerTwo).drawWinner();
             return;
-        }
-        else {
-            Game.switchTurn();
-            playGame(playerOne, playerTwo);
-        }
-    }
-    return { playGame, pickField };
+        };
+        count++;
+        playRound(playerOne, playerTwo, count);
+    };
+    return { playRound, pickField };
 };
 
 const displayController = (humanPlayer, computerPlayer) => {
@@ -189,6 +184,10 @@ const displayController = (humanPlayer, computerPlayer) => {
             alert(humanPlayer.getSign());
             choiceDiv.innerHTML = "";
             drawBoard();
+            if (computerPlayer.getSign() == 1) {
+                helpers.playRound(humanPlayer, computerPlayer, 1);
+            }
+            boardEventHandler();
         }
     }
     const drawBoard = () => {
@@ -200,28 +199,39 @@ const displayController = (humanPlayer, computerPlayer) => {
             row.setAttribute("id", `row-${i}`);
             boardDiv.appendChild(row);
             for (let j = 0; j < size; j++) {
+                let sign = Board.currentState()[i][j].getState();
+                if (sign == 0) sign = "";
+                else sign = sign == 1 ? "X" : "O";
                 const cell = document.createElement("button");
-                cell.setAttribute("data-column", i);
-                cell.setAttribute("data-row", j);
-                cell.textContent = Board.currentState()[i][j].getState();
+                cell.setAttribute("data-row", i);
+                cell.setAttribute("data-column", j);
+                cell.textContent = sign;
                 row.appendChild(cell);
             }
         }
+    };
+    const boardEventHandler = () => {
+        const boardDiv = document.getElementById("board");
         boardDiv.onclick = function (event) {
             let target = event.target;
-            if (target.tagName != "BUTTON") return;
-            // TODO maybe just assign colum an drow?
+            if (target.tagName != "BUTTON" ||
+                target.textContent == "X" ||
+                target.textContent == "O") {
+                return;
+            }
+            // why do i need the swap of row and column? DEBUG
             humanPlayer.setColRow(target.dataset.column, target.dataset.row);
-            helpers.playGame(humanPlayer, computerPlayer);
+            helpers.playRound(humanPlayer, computerPlayer, 0);
         }
-    }
+    };
     const drawWinner = () => {
+        // MAKE BOARD NOT CLICKABLE
         winDiv = document.getElementById("game-over");
         const message = document.createElement("h2");
         // todo make this a function?
         message.textContent = "Game over. Win or draw, whatever.";
         winDiv.appendChild(message);
-    }
+    };
     return { drawChoice, drawBoard, drawWinner }
 }
 
@@ -236,7 +246,4 @@ const gameFlow = (function () {
     computer.setAutoFill();
     // Set human player choices
     display.drawChoice(human);
-
-    // // Play
-    // helpers.playGame(human, computer);
 })();
