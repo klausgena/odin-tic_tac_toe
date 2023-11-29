@@ -224,7 +224,9 @@ const displayController = (humanPlayer, computerPlayer) => {
         }
     };
     const drawWinner = () => {
-        // MAKE BOARD NOT CLICKABLE
+        // remove event handler from board
+        boardDiv = document.getElementById("board");
+        boardDiv.onclick = null;
         winDiv = document.getElementById("game-over");
         const message = document.createElement("h2");
         // todo make this a function?
