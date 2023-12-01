@@ -39,6 +39,7 @@ const Game = (function () {
         else return false;
     };
     const setDraw = () => draw = true;
+    const resetDraw = () => draw = false;
     const getDraw = () => draw;
     const setWinner = () => winner = true;
     const resetWinner = () => winner = false;
@@ -49,7 +50,7 @@ const Game = (function () {
     const switchTurn = () => turn = turn == 1 ? 2 : 1;
     const getTurn = () => turn;
     const setFirstTurn = () => turn = 1;
-    return { resetWinner, setFirstTurn, setDraw, getDraw, setWinner, getWinner, addMove, isGameOver, resetMoves, getMoves, switchTurn, getTurn };
+    return { resetDraw, resetWinner, setFirstTurn, setDraw, getDraw, setWinner, getWinner, addMove, isGameOver, resetMoves, getMoves, switchTurn, getTurn };
 })();
 
 const Board = (function () {
@@ -283,6 +284,7 @@ const displayController = (humanPlayer, computerPlayer) => {
             Game.resetMoves();
             Game.resetWinner();
             Game.setFirstTurn();
+            Game.resetDraw();
             humanPlayer.resetWinner();
             computerPlayer.resetWinner();
             alert(Game.getMoves());
