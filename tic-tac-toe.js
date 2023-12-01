@@ -23,10 +23,11 @@ function Player() {
     const getColRow = () => [col, row];
     const getSign = () => sign;
     const setWinner = () => winner = true;
+    const resetWinner = () => winner = false;
     const getWinner = () => winner;
     const setAutoFill = () => autoFill = true;
     const getAutoFill = () => autoFill;
-    return { setSign, getSign, setWinner, getWinner, setAutoFill, getAutoFill, setColRow, getColRow };
+    return { resetWinner, setSign, getSign, setWinner, getWinner, setAutoFill, getAutoFill, setColRow, getColRow };
 }
 const Game = (function () {
     let moves = 0;
@@ -40,13 +41,15 @@ const Game = (function () {
     const setDraw = () => draw = true;
     const getDraw = () => draw;
     const setWinner = () => winner = true;
+    const resetWinner = () => winner = false;
     const getWinner = () => winner;
     const addMove = () => moves++;
     const resetMoves = () => moves = 0;
     const getMoves = () => moves;
     const switchTurn = () => turn = turn == 1 ? 2 : 1;
     const getTurn = () => turn;
-    return { setDraw, getDraw, setWinner, getWinner, addMove, isGameOver, resetMoves, getMoves, switchTurn, getTurn };
+    const setFirstTurn = () => turn = 1;
+    return { resetWinner, setFirstTurn, setDraw, getDraw, setWinner, getWinner, addMove, isGameOver, resetMoves, getMoves, switchTurn, getTurn };
 })();
 
 const Board = (function () {
@@ -54,12 +57,7 @@ const Board = (function () {
     const rows = 3;
     const columns = 3;
     // initialize the game board
-    for (let row = 0; row < rows; row++) {
-        board[row] = [];
-        for (let column = 0; column < columns; column++) {
-            board[row].push(Cell());
-        }
-    }
+    drawBoard(board, rows, columns);
     const currentState = () => board;
     const changeState = (column, row, state) => {
         board[row][column].setState(state);
@@ -70,8 +68,21 @@ const Board = (function () {
         }
         return false;
     };
-    return { currentState, changeState, isEmpty };
+    const resetBoard = () => {
+        drawBoard(board, rows, columns);
+    }
+    return { currentState, changeState, isEmpty, resetBoard };
 })();
+
+function drawBoard(board, rows, columns) {
+    while (board.length > 0) { board.pop() };
+    for (let row = 0; row < rows; row++) {
+        board[row] = [];
+        for (let column = 0; column < columns; column++) {
+            board[row].push(Cell());
+        }
+    }
+}
 
 function gameHelpers() {
     const checkDraw = () => {
@@ -162,6 +173,7 @@ function gameHelpers() {
 
 const displayController = (humanPlayer, computerPlayer) => {
     const helpers = gameHelpers();
+
     const drawChoice = () => {
         const choiceDiv = document.getElementById("player-choice");
         const xButton = document.createElement("button");
@@ -218,21 +230,67 @@ const displayController = (humanPlayer, computerPlayer) => {
                 target.textContent == "O") {
                 return;
             }
-            // why do i need the swap of row and column? DEBUG
             humanPlayer.setColRow(target.dataset.column, target.dataset.row);
             helpers.playRound(humanPlayer, computerPlayer, 0);
         }
     };
     const drawWinner = () => {
         // remove event handler from board
-        boardDiv = document.getElementById("board");
+        const boardDiv = document.getElementById("board");
         boardDiv.onclick = null;
         winDiv = document.getElementById("game-over");
         const message = document.createElement("h2");
         // todo make this a function?
-        message.textContent = "Game over. Win or draw, whatever.";
+        message.textContent = winnerLoserOrDraw();
         winDiv.appendChild(message);
+        drawPlayAgain();
     };
+    function winnerLoserOrDraw() {
+        const text = "";
+        const humanSign = humanPlayer.getSign();
+        const computerSign = computerPlayer.getSign();
+        if (Game.getWinner) {
+            if (humanPlayer.getWinner()) {
+                let sign = humanSign == 1 ? "X" : "O";
+                return `${sign} wins. Happy now?`;
+            }
+            else if (computerPlayer.getWinner()) {
+                sign = computerSign == 1 ? "X" : "O";
+                return `${sign} wins. You really managed to lose against a computer playing random moves?`;
+            }
+            else { return "It's a draw. Better luck next time."; }
+        }
+    }
+    function drawPlayAgain() {
+        const message = "Want to play another game?"
+        const par = document.createElement("p");
+        par.textContent = message;
+        const button = document.createElement("button");
+        const winDiv = document.getElementById("game-over");
+        button.textContent = "Play again";
+        button.setAttribute("id", "play-again");
+        winDiv.appendChild(par);
+        winDiv.appendChild(button);
+        playAgainHandler();
+    };
+    function playAgainHandler() {
+        const playButton = document.getElementById("play-again");
+        playButton.onclick = function (event) {
+            const boardDiv = document.getElementById("board");
+            boardDiv.textContent = "";
+            const winDiv = document.getElementById("game-over");
+            winDiv.textContent = "";
+            Game.resetMoves();
+            Game.resetWinner();
+            Game.setFirstTurn();
+            humanPlayer.resetWinner();
+            computerPlayer.resetWinner();
+            alert(Game.getMoves());
+            Board.resetBoard();
+            drawChoice(humanPlayer);
+        }
+    };
+
     return { drawChoice, drawBoard, drawWinner }
 }
 
@@ -248,3 +306,6 @@ const gameFlow = (function () {
     // Set human player choices
     display.drawChoice(human);
 })();
+
+// TODO start new game button
+// TODO who is the winner? Is it a draw if no winner?
